@@ -99,7 +99,7 @@ cd /opt/k0s
 # (Optional) Link binaries to PATH
 sudo ln -sf /opt/k0s/k* /opt/k0s/helm /usr/local/bin/
 
-# Copy the air-gap bundle to the designated directory
+# Load the docker images in the air-gap bundle
 sudo mkdir -p /var/lib/k0s/images/
 sudo cat   ./k0s-airgap-bundle-* | docker load
 sudo rm -f ./k0s-airgap-bundle-*
@@ -107,6 +107,9 @@ sudo rm -f ./k0s-airgap-bundle-*
 
 #### 3. Install and start K0s service
 ```bash
+# Setup cri-dockerd for k0s to use docker daemon
+create_cri_dockerd_unit_files
+
 # Install as a single-node controller + worker
 sudo k0s install controller --single --enable-worker
 
@@ -116,15 +119,17 @@ sudo k0s start
 
 #### 4. (Optional) Manually start k0s without systemd
 ```bash
-sudo k0s controller --single --enable-worker -v
+sudo /opt/k0s/cri-dockerd \
+  --docker-endpoint=unix:///var/run/docker.sock \
+  --container-runtime-endpoint=unix:///run/cri-dockerd.sock
+
+sudo k0s controller --single --enable-worker \
+  --cri-socket=remote:unix:///run/cri-dockerd.sock -v
 ```
 
 #### 5. Verify installation
 ```bash
 sudo k0s status
-sudo k0s kubectl get nodes
-
-
 
 mkdir -pv ~/.kube
 sudo k0s kubeconfig admin > ~/.kube/config
