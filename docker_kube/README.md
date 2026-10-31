@@ -21,10 +21,11 @@ The tools and files included in each container image:
 | Component Role | `k3s-ctk` Image | `k0s-ctk` Image | Description |
 | :--- | :--- | :--- | :--- |
 | **Kubernetes Engine** | `k3s` | `k0s` | The core Kubernetes distribution binary. |
-| **Air-gap Image Bundle** | `k3s-airgap-images-*.tar.zst` | `k0s-airgap-bundle-*` | System container images bundle for offline deployment. |
+| **Air-gap Image Bundle** | `k3s-airgap-images-*.tar.zst` | `k0s-airgap-bundle-*.tar` | System container images bundle for offline deployment. |
 | **Kubernetes CLI** | `kubectl` | `kubectl` | Command-line tool for control plane operations. |
 | **Package Manager** | `helm` | `helm` | Tool for managing Kubernetes pre-packaged charts. |
-| **Official Installer** | `script-get-k3s-io.sh` | *N/A* | Official installation script (embedded in K0s). |
+| **CRI Adapter** | (embedded in k3s) | `cri-dockerd` | Adapter to use Docker as the container runtime. |
+| **Official Installer** | `script-get-k3s-io.sh` | (embedded in k0s) | Official installation script. |
 | **Setup Helper Script** | `script-setup-k3s.sh` | `script-setup-k0s.sh` | Scripts containing functions for configuration and setup. |
 
 ---
