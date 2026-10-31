@@ -37,7 +37,7 @@ jobs:
       - run: |
           source ./tool.sh && K8S_VERSION=1.37.1
           build_image_no_tag k3s-ctk latest docker_kube/k3s-ctk.Dockerfile --build-arg K8S_VERSION=${K8S_VERSION}
-          alias_image        k3s-ctk latest k3s-ctk:${K8S_VERSION}
+          alias_image        k3s-ctk latest k3s-ctk ${K8S_VERSION}
           push_image ${K8S_VERSION}
 
   job-k0s-ctk:
@@ -48,7 +48,7 @@ jobs:
       - run: |
           source ./tool.sh && K8S_VERSION=1.37.1
           build_image_no_tag k0s-ctk latest docker_kube/k0s-ctk.Dockerfile --build-arg K8S_VERSION=${K8S_VERSION}
-          alias_image        k0s-ctk latest k0s-ctk:${K8S_VERSION}
+          alias_image        k0s-ctk latest k0s-ctk ${K8S_VERSION}
           push_image ${K8S_VERSION}
 
 
