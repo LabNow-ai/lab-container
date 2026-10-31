@@ -1,8 +1,18 @@
 #!/bin/bash
-set -eux
+if [ "${GITHUB_ACTIONS:-"false"}" != "true" ]; then
+  export CI_PROJECT_BRANCH=$(git branch --show-current)         CI_PROJECT_NAME=LabNow/lab-container-kit
+  export REGISTRY_SRC=quay.io REGISTRY_DST=quay.io
+  echo "Not running in GitHub Action."
+else
+  set -exu
+  export CI_PROJECT_BRANCH=${GITHUB_HEAD_REF:-$GITHUB_REF_NAME} CI_PROJECT_NAME=${CI_PROJECT_NAME:-$GITHUB_REPOSITORY}
+  echo "Running in GitHub Actions and Setup Env:"
+  [ ! -f /etc/docker/daemon.json ] && sudo tee /etc/docker/daemon.json > /dev/null <<< '{}' ;
+  jq '.experimental=true | ."data-root"="/mnt/docker"' /etc/docker/daemon.json > /tmp/daemon.json && sudo mv /tmp/daemon.json /etc/docker/ ;
+  ( sudo service docker restart || true ) && cat /etc/docker/daemon.json && docker info ;
+fi
 
-CI_PROJECT_NAME=${CI_PROJECT_NAME:-$GITHUB_REPOSITORY}
-CI_PROJECT_BRANCH=${GITHUB_HEAD_REF:-"main"}
+
 CI_PROJECT_SPACE=$(echo "${CI_PROJECT_BRANCH}" | cut -f1 -d'/')
 
 # If on the main branch, image namespace will be same as CI_PROJECT_NAME's name space;
@@ -11,7 +21,7 @@ CI_PROJECT_SPACE=$(echo "${CI_PROJECT_BRANCH}" | cut -f1 -d'/')
 export CI_PROJECT_NAMESPACE="$(dirname ${CI_PROJECT_NAME})${NAMESPACE_SUFFIX}" ;
 
 export IMG_NAMESPACE=$(echo "${CI_PROJECT_NAMESPACE}" | awk '{print tolower($0)}')
-export IMG_PREFIX_SRC=$(echo "${REGISTRY_SRC:-"docker.io"}/${IMG_NAMESPACE}" | awk '{print tolower($0)}')
+export IMG_PREFIX_SRC=$(echo "${REGISTRY_SRC:-"quay.io"}/${IMG_NAMESPACE}"   | awk '{print tolower($0)}')
 export IMG_PREFIX_DST=$(echo "${REGISTRY_DST:-"docker.io"}/${IMG_NAMESPACE}" | awk '{print tolower($0)}')
 export TAG_SUFFIX="-$(git rev-parse --short HEAD)"
 
@@ -25,7 +35,9 @@ echo "--------> DOCKER_TAG_SUFFIX=${TAG_SUFFIX}"
 build_image() {
     echo "$@" ;
     IMG=$1; TAG=$2; FILE=$3; shift 3; VER=$(date +%Y.%m%d.%H%M)${TAG_SUFFIX}; WORKDIR="$(dirname $FILE)";
-    docker build --compress --force-rm=true -t "${IMG_PREFIX_DST}/${IMG}:${TAG}" -f "$FILE" --build-arg "BASE_NAMESPACE=${IMG_PREFIX_SRC}" "$@" "${WORKDIR}"
+    BUILDKIT_PROGRESS=plain DOCKER_BUILDKIT=1 \
+      docker build --compress --force-rm=true -t "${IMG_PREFIX_DST}/${IMG}:${TAG}" -f "$FILE" \
+      --build-arg "BASE_NAMESPACE=${IMG_PREFIX_SRC}" "$@" "${WORKDIR}"
     docker tag "${IMG_PREFIX_DST}/${IMG}:${TAG}" "${IMG_PREFIX_DST}/${IMG}:${VER}"
     echo "${IMG_PREFIX_DST}/${IMG}:${TAG}"
 }
@@ -33,7 +45,9 @@ build_image() {
 build_image_no_tag() {
     echo "$@" ;
     IMG=$1; TAG=$2; FILE=$3; shift 3; WORKDIR="$(dirname $FILE)";
-    docker build --compress --force-rm=true -t "${IMG_PREFIX_DST}/${IMG}:${TAG}" -f "$FILE" --build-arg "BASE_NAMESPACE=${IMG_PREFIX_SRC}" "$@" "${WORKDIR}"
+    BUILDKIT_PROGRESS=plain DOCKER_BUILDKIT=1 \
+      docker build --compress --force-rm=true -t "${IMG_PREFIX_DST}/${IMG}:${TAG}" -f "$FILE" \
+      --build-arg "BASE_NAMESPACE=${IMG_PREFIX_SRC}" "$@" "${WORKDIR}"
     echo "${IMG_PREFIX_DST}/${IMG}:${TAG}"
 }
 
@@ -85,10 +99,3 @@ free_diskspace() {
     remove_folder /usr/share/dotnet ; # /usr/local/lib/android /var/lib/docker
     df -h ;
 }
-
-setup_github_actions() {
-    [ ! -f /etc/docker/daemon.json ] && sudo tee /etc/docker/daemon.json > /dev/null <<< '{}' ;
-    jq '.experimental=true | ."data-root"="/mnt/docker"' /etc/docker/daemon.json > /tmp/daemon.json && sudo mv /tmp/daemon.json /etc/docker/ ;
-    ( sudo service docker restart || true ) && cat /etc/docker/daemon.json && docker info ;
-}
-[ "$GITHUB_ACTIONS" = "true" ] && echo "Running in GitHub Actions and Setup Env: $(setup_github_actions)"

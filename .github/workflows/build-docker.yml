@@ -7,15 +7,17 @@ on:
   pull_request:
     branches: [ "main" ]
     paths-ignore: [ "*.md" ]
-
   workflow_dispatch:  # Allows you to run this workflow manually from the Actions tab
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 env:
-  BUILDKIT_PROGRESS: "plain"  # Full logs for CI build.
+  TZ: Asia/Shanghai
   REGISTRY_SRC: ${{ vars.REGISTRY_SRC || 'quay.io' }} # For BASE_NAMESPACE of images: where to pull base images from, docker.io or other source registry URL.
   REGISTRY_DST: ${{ vars.REGISTRY_DST || 'quay.io' }} # For tags of built images: where to push images to, docker.io or other destination registry URL.
   # DOCKER_REGISTRY_USERNAME and DOCKER_REGISTRY_PASSWORD is required for docker image push, they should be set in CI secrets.
@@ -24,24 +26,30 @@ env:
   # used to sync image to mirror registry
   DOCKER_MIRROR_REGISTRY_USERNAME: ${{ vars.DOCKER_MIRROR_REGISTRY_USERNAME }}
   DOCKER_MIRROR_REGISTRY_PASSWORD: ${{ secrets.DOCKER_MIRROR_REGISTRY_PASSWORD }}
-  CI_PROJECT_NAME: ${{ vars.CI_PROJECT_NAME || 'LabNow/lab-container' }}
+  CI_PROJECT_NAME: ${{ vars.CI_PROJECT_NAME || 'LabNow/lab-container-kit' }}
 
 jobs:
   job-k3s-ctk:
     name: 'k3s-ctk'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: |
-          source ./tool.sh && build_image k3s-ctk latest docker_kube/k3s-ctk.Dockerfile && push_image
+          source ./tool.sh && K8S_VERSION=1.37.1
+          build_image_no_tag k3s-ctk latest docker_kube/k3s-ctk.Dockerfile --build-arg K8S_VERSION=${K8S_VERSION}
+          alias_image        k3s-ctk latest k3s-ctk ${K8S_VERSION}
+          push_image ${K8S_VERSION}
 
   job-k0s-ctk:
     name: 'k0s-ctk'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: |
-          source ./tool.sh && build_image k0s-ctk latest docker_kube/k0s-ctk.Dockerfile && push_image
+          source ./tool.sh && K8S_VERSION=1.37.1
+          build_image_no_tag k0s-ctk latest docker_kube/k0s-ctk.Dockerfile --build-arg K8S_VERSION=${K8S_VERSION}
+          alias_image        k0s-ctk latest k0s-ctk ${K8S_VERSION}
+          push_image ${K8S_VERSION}
 
 
   ## Sync all images in this build (listed by "names") to mirror registry.
@@ -49,7 +57,7 @@ jobs:
     needs: ["job-k3s-ctk", "job-k0s-ctk"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - env:
           AUTH_FILE_CONTENT: ${{ secrets.AUTH_FILE_CONTENT }}
           DOCKER_MIRROR_REGISTRY: ${{ vars.DOCKER_MIRROR_REGISTRY }}
