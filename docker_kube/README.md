@@ -97,19 +97,19 @@ K0s loads offline images from `/var/lib/k0s/images/` by default.
 ```bash
 cd /opt/k0s
 
-# (Optional) Link binaries to PATH
-sudo ln -sf /opt/k0s/k* /opt/k0s/helm /usr/local/bin/
-
 # Load the docker images in the air-gap bundle
 sudo mkdir -p /var/lib/k0s/images/
 sudo cat   ./k0s-airgap-bundle-* | docker load
 sudo rm -f ./k0s-airgap-bundle-*
+
+# (Optional) Link binaries to PATH
+sudo ln -sf /opt/k0s/k* /opt/k0s/helm /usr/local/bin/
 ```
 
 #### 3. Install and start K0s service
 ```bash
-# Setup cri-dockerd for k0s to use docker daemon
-create_cri_dockerd_unit_files
+# (Optional) Setup cri-dockerd for k0s to use docker daemon instead of containerd as runtime
+source ./script-setup-k0s.sh && create_cri_dockerd_unit_files
 
 # Install as a single-node controller + worker
 sudo k0s install controller --single --enable-worker
