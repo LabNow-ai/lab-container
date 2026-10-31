@@ -45,28 +45,24 @@ Import the K3s system images into your Docker daemon:
 ```bash
 cd /opt/k3s
 zstd -cd ./k3s-airgap-images-${ARCH:-amd64}.tar.zst | docker load
+
+# (Optional) Link binaries to PATH
+sudo ln -sf /opt/k3s/k3s* /opt/k3s/kubectl /usr/local/bin/
 ```
 
-#### 3. Configure and start cri-dockerd
-```bash
-# Generate systemd socket and service unit files
-source ./script-setup-k3s.sh && create_cri_dockerd_unit_files
-
-# Enable and start the service
-sudo systemctl daemon-reload
-sudo systemctl enable --now cri-docker.socket cri-docker.service
-```
-
-#### 4. Run the offline installer
+#### 3. Run the offline installer
 ```bash
 INSTALL_K3S_SKIP_DOWNLOAD=true \
 INSTALL_K3S_BIN_DIR=/opt/k3s \
 ./script-get-k3s-io.sh --docker --data-dir /data/storage/data-k3s
 ```
 
-#### 5. Link binaries to PATH (Optional)
+#### 4. (Optional) Manually start k3s without systemd
+For environment like Github Codespace, you might want to start k3s without systemd:
 ```bash
-sudo ln -sf /opt/k3s/k3s* /opt/k3s/kubectl /opt/k3s/cri-dockerd /usr/local/bin/
+sudo k3s server \
+  --docker \
+  --container-runtime-endpoint unix:///var/run/docker.sock
 ```
 
 ---
