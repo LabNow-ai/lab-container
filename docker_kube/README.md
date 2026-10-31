@@ -24,7 +24,6 @@ The tools and files included in each container image:
 | **Air-gap Image Bundle** | `k3s-airgap-images-*.tar.zst` | `k0s-airgap-bundle-*` | System container images bundle for offline deployment. |
 | **Kubernetes CLI** | `kubectl` | `kubectl` | Command-line tool for control plane operations. |
 | **Package Manager** | `helm` | `helm` | Tool for managing Kubernetes pre-packaged charts. |
-| **CRI Adapter** | `cri-dockerd` | *N/A* | Adapter to use Docker as the container runtime (embedded in K0s). |
 | **Official Installer** | `script-get-k3s-io.sh` | *N/A* | Official installation script (embedded in K0s). |
 | **Setup Helper Script** | `script-setup-k3s.sh` | `script-setup-k0s.sh` | Scripts containing functions for configuration and setup. |
 
@@ -65,6 +64,22 @@ sudo k3s server \
   --container-runtime-endpoint unix:///var/run/docker.sock
 ```
 
+#### 5. Access the k3s cluster with kubectl
+
+Copy the k3s default kube config file `/etc/rancher/k3s/k3s.yaml` for current user and use kubectl.
+
+```bash
+mkdir -pv ~/.kube
+sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+sudo chown "$(id -u):$(id -g)" ~/.kube/config
+chmod 600 ~/.kube/config
+
+kubectl cluster-info
+kubectl get nodes -o wide
+kubectl get pods -A
+kubectl get services -A
+```
+
 ---
 
 ### Option B: Install K0s
@@ -80,8 +95,8 @@ K0s loads offline images from `/var/lib/k0s/images/` by default.
 ```bash
 cd /opt/k0s
 
-# Copy binaries to PATH
-sudo cp ./k0s ./kubectl ./helm /usr/local/bin/
+# (Optional) Link binaries to PATH
+sudo ln -sf ./k0s ./kubectl ./helm /usr/local/bin/
 
 # Copy the air-gap bundle to the designated directory
 sudo mkdir -p /var/lib/k0s/images/
