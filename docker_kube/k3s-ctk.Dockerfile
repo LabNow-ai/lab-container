@@ -10,9 +10,9 @@ COPY work /opt/utils/
 
 RUN set -eux && chmod +x /opt/utils/*.sh \
  && source /opt/utils/script-setup-k8s-common.sh && setup_verify_arch && setup_kubectl && setup_helm && setup_k9s \
- && source /opt/utils/script-setup-k3s.sh        && setup_k3s && setup_cri_dockerd && setup_k3s_pack \
- && mv /opt/k8s/*                                                      /opt/k3s/ \
- && mv /opt/utils/script-setup-k3s.sh /opt/utils/script-get-k3s-io.sh  /opt/k3s/ \
+ && source /opt/utils/script-setup-k3s.sh        && setup_k3s && setup_k3s_pack \
+ && mv /opt/k8s/*                                                     /opt/k3s/ \
+ && mv /opt/utils/script-setup-k3s.sh /opt/utils/script-get-k3s-io.sh /opt/k3s/ \
  && rm -rf /opt/k8s && ls -alh /opt/*
 
 
