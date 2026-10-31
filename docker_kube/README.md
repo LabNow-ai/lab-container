@@ -44,9 +44,10 @@ Import the K3s system images into your Docker daemon:
 ```bash
 cd /opt/k3s
 zstd -cd ./k3s-airgap-images-${ARCH:-amd64}.tar.zst | docker load
+sudo rm -f /opt/k3s/k3s-*.tar.zst
 
 # (Optional) Link binaries to PATH
-sudo ln -sf /opt/k3s/k3s* /opt/k3s/kubectl /usr/local/bin/
+sudo ln -sf /opt/k3s/k* /opt/k3s/helm /usr/local/bin/
 ```
 
 #### 3. Run the offline installer
@@ -96,11 +97,12 @@ K0s loads offline images from `/var/lib/k0s/images/` by default.
 cd /opt/k0s
 
 # (Optional) Link binaries to PATH
-sudo ln -sf ./k0s ./kubectl ./helm /usr/local/bin/
+sudo ln -sf /opt/k0s/k* /opt/k0s/helm /usr/local/bin/
 
 # Copy the air-gap bundle to the designated directory
 sudo mkdir -p /var/lib/k0s/images/
-sudo cp ./k0s-airgap-bundle-* /var/lib/k0s/images/
+sudo cat   ./k0s-airgap-bundle-* | docker load
+sudo rm -f ./k0s-airgap-bundle-*
 ```
 
 #### 3. Install and start K0s service
@@ -112,8 +114,25 @@ sudo k0s install controller --single --enable-worker
 sudo k0s start
 ```
 
-#### 4. Verify installation
+#### 4. (Optional) Manually start k0s without systemd
+```bash
+sudo k0s controller --single --enable-worker -v
+```
+
+#### 5. Verify installation
 ```bash
 sudo k0s status
 sudo k0s kubectl get nodes
+
+
+
+mkdir -pv ~/.kube
+sudo k0s kubeconfig admin > ~/.kube/config
+sudo chown "$(id -u):$(id -g)" ~/.kube/config
+chmod 600 ~/.kube/config
+
+kubectl cluster-info
+kubectl get nodes -o wide
+kubectl get pods -A
+kubectl get services -A
 ```

@@ -33,7 +33,7 @@ jobs:
     name: 'k3s-ctk'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: |
           source ./tool.sh && build_image k3s-ctk latest docker_kube/k3s-ctk.Dockerfile && push_image
 
@@ -41,7 +41,7 @@ jobs:
     name: 'k0s-ctk'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: |
           source ./tool.sh && build_image k0s-ctk latest docker_kube/k0s-ctk.Dockerfile && push_image
 
@@ -51,7 +51,7 @@ jobs:
     needs: ["job-k3s-ctk", "job-k0s-ctk"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - env:
           AUTH_FILE_CONTENT: ${{ secrets.AUTH_FILE_CONTENT }}
           DOCKER_MIRROR_REGISTRY: ${{ vars.DOCKER_MIRROR_REGISTRY }}
